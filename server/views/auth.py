@@ -4,8 +4,8 @@ from flask_jwt_extended import (
     create_access_token, jwt_required, get_jwt_identity
 )
 from models import User
-from flask_mail import Message 
-from config import db, mail  
+from flask_mail import Message
+from config import db, mail
 import re
 import os
 
@@ -21,10 +21,40 @@ def is_valid_password(password):
     """Ensure password meets security standards."""
     return len(password) >= 8 and any(char.isdigit() for char in password)
 
+# -------------------- Create First Admin --------------------
+@auth_blueprint.route('/create-first-admin', methods=['POST'])
+def create_first_admin():
+    # Check if an admin already exists
+    existing_admin = User.query.filter_by(is_admin=True).first()
+    if existing_admin:
+        return jsonify({'message': 'Admin user already exists'}), 400
+
+    # Create the first admin
+    new_admin = User(
+        first_name="Hamza",
+        last_name="Ridhwan",
+        email="hamzathehamzah@gmail.com",
+        password=generate_password_hash("Rasengan_1", method="pbkdf2:sha256"),
+        is_admin=True
+    )
+
+    db.session.add(new_admin)
+    db.session.commit()
+
+    return jsonify({'message': 'First admin created successfully'}), 201
+
 # -------------------- Sign up as a User --------------------
 @auth_blueprint.route('/signup', methods=['POST'])
+@jwt_required()  # Protects this route; only authorized users (admin) can create new admins
 def signup():
     data = request.get_json()
+    
+    # Check if the user is an admin trying to create another admin
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    if current_user and not current_user.is_admin:
+        return jsonify({'message': 'Only admin users can create new admins'}), 403
 
     if not is_valid_email(data['email']):
         return jsonify({'message': 'Invalid email format'}), 400
@@ -39,11 +69,15 @@ def signup():
 
     hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
 
+    # Check if 'is_admin' is provided, default to False if not
+    is_admin = data.get('is_admin', False)
+
     new_user = User(
         first_name=data['first_name'],
         last_name=data['last_name'],
         email=data['email'],
-        password=hashed_password
+        password=hashed_password,
+        is_admin=is_admin
     )
 
     db.session.add(new_user)

@@ -12,6 +12,7 @@ flask-jwt-extended = "*"
 werkzeug = "*"
 faker = "*"
 flask-mail = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

@@ -19,7 +19,8 @@ class User(db.Model):
             'id': self.id,
             'firstName': self.first_name,
             'lastName': self.last_name,
-            'email': self.email
+            'email': self.email,
+            'isAdmin': self.is_admin
         }
     
 class Order(db.Model):
