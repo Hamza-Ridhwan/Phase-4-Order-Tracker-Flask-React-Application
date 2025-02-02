@@ -23,6 +23,10 @@ def get_user_profile():
 def update_user_profile():
     user_id = get_jwt_identity()
     data = request.get_json()
+
+    # Log the received data
+    print("Received update data:", data)
+
     user = User.query.get(user_id)
 
     if not user:
@@ -41,6 +45,7 @@ def update_user_profile():
 
     db.session.commit()
     return jsonify({'message': 'Profile updated successfully'}), 200
+
 
 # -------------------- Delete Profile (With Confirmation) --------------------
 @user_blueprint.route('/profile_delete', methods=['DELETE'])
